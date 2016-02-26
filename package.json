@@ -1,0 +1,16 @@
+{
+  "name": "fisheye",
+  "version": "0.1.0",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-autoprefixer": "^3.1.0",
+    "gulp-concat-css": "^2.2.0",
+    "gulp-connect": "^2.3.1",
+    "gulp-cssnano": "^2.1.0",
+    "gulp-less": "^3.0.5",
+    "gulp-livereload": "^3.8.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^1.6.0"
+  },
+  "private": true
+}

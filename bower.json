@@ -1,0 +1,26 @@
+{
+  "name": "fisheye",
+  "authors": [
+    "Mykhaylo Gomonyuk <mihcom.mail@gmail.com>"
+  ],
+  "description": "A test project to implement Fish Eye effect on canvas",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "fabric.js": "fabric#^1.5.0",
+    "requirejs": "^2.1.22",
+    "text": "requirejs-text#^2.0.14",
+    "lodash": "^4.5.1",
+    "jquery": "^2.2.1"
+  }
+}
