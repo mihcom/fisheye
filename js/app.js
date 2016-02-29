@@ -24,7 +24,8 @@ require(['./fisheye'], function (Fisheye) {
     var canvas = document.querySelector('canvas'),
         options = {
             canvas: canvas,
-            imageUrl: '/images/marc-jacobs.jpg'
+            imageUrl: '/images/marc-jacobs.jpg',
+            spriteImagesCount: 41
         };
 
     new Fisheye(options);
