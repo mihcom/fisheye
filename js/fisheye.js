@@ -25,7 +25,7 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
         var ready = new $.Deferred(),
             canvas = new fabric.Canvas(this.options.canvas, {
                 width: $('body').width(),
-                height: 600,
+                height: 225,
                 renderOnAddRemove: false
             });
 
@@ -42,15 +42,15 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
                 height: imageHeight
             });
 
-            spriteImage.originX = 'left';
-            spriteImage.originY = 'top';
-
             tempCanvas.add(spriteImage);
 
             for (var i = 0; i < this.options.spriteImagesCount; i++) {
                 spriteImage.left = -imageWidth * i;
-                spriteImage.setCoords();
                 tempCanvas.renderAll();
+
+                //var context = tempCanvas.getContext();
+                //context.strokeStyle = 'green';
+                //context.strokeRect(0, 0, imageWidth, imageHeight);
 
                 var image = new window.Image();
                 image.src = tempCanvas.toDataURL();
@@ -61,7 +61,6 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
                     height: imageHeight,
                     left: i * imageWidth,
                     visualWidth: imageWidth,
-                    visualRange: {},
                     index: i
                 });
 
@@ -84,23 +83,16 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
             $(window).resize(_.throttle(onResize, 300));
 
             this.canvas.on('mouse:move', function (options) {
-                var target = options.target;
-
-                if (target) {
-                    var pointer = canvas.getPointer(options.e);
-
-                    if (pointer.x <= target.visualRange.left) {
-                        target = this.images[target.index - 1];
-                    }
-                }
-
-                this.updateFishEye({image: target});
+                var pointer = options.target ? canvas.getPointer(options.e) : undefined;
+                this.updateFishEye({pointer: pointer});
             }.bind(this));
+
+            $(this.options.canvas).parent().mouseout(this.updateFishEye.bind(this));
 
             var updateCanvas = function () {
                 canvas.renderAll();
                 window.requestAnimationFrame(updateCanvas);
-            }
+            };
 
             window.requestAnimationFrame(updateCanvas);
 
@@ -123,32 +115,31 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
     Fisheye.prototype.updateFishEye = function (options) {
         options = options || {};
 
-        var images = this.images;
-
         var newVisualWidth = this.canvas.width / this.options.spriteImagesCount,
-            totalWidth = this.images.length * newVisualWidth,
-            length = this.images.length;
+            totalWidth = 0,
+            length = this.images.length,
+            WAVE_WING_WIDTH = 350,
+            image;
 
         this.positionAccumulator = 0;
 
         for (var i = 0, length = this.images.length; i < length; i++) {
-            images[i].newVisualWidth = newVisualWidth;
-        }
+            image = this.images[i];
 
-        if (options.image) {
-            totalWidth += options.image.width - options.image.newVisualWidth;
-            options.image.newVisualWidth = options.image.width;
+            if (options.pointer) {
+                var centerXCoordinate = image.left + image.width / 2,
+                    distanceFromCenterToMouse = options.pointer.x - centerXCoordinate,
+                    normalizedDistanceFromCenterToMouse = distanceFromCenterToMouse / WAVE_WING_WIDTH,
+                    weight = -Math.pow(Math.abs(normalizedDistanceFromCenterToMouse), 1.4) + 1,
+                    calculatedNewVisualWidth = image.width * weight;
 
-            var WAVE_LENGTH = 3,
-                WAVE_FORCE = 0.8;
-
-            for (i = options.image.index - 1; i >= 0 && i >= options.image.index - WAVE_LENGTH; i--) {
-                this.images[i].newVisualWidth = this.images[i + 1].newVisualWidth * WAVE_FORCE;
+                image.newVisualWidth = Math.max(newVisualWidth, calculatedNewVisualWidth);
+            }
+            else {
+                image.newVisualWidth = newVisualWidth;
             }
 
-            for (i = options.image.index + 1; i < length && i < options.image.index + WAVE_LENGTH; i++) {
-                this.images[i].newVisualWidth = this.images[i - 1].newVisualWidth * WAVE_FORCE;
-            }
+            totalWidth += image.newVisualWidth;
         }
 
         if (totalWidth > this.canvas.width) {
@@ -160,13 +151,17 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
         }
 
         for (i = 0; i < length; i++) {
-            var image = this.images[i];
+            image = this.images[i];
+
+            image.set({
+                left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2
+            });
 
             //image.animate({
             //    left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2,
             //    visualWidth: image.newVisualWidth
             //}, {
-            //    duration: 10,
+            //    duration: 100,
             //    easing: fabric.util.ease.easeOutExpo
             //});
 
@@ -174,8 +169,6 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
                 left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2,
                 visualWidth: image.newVisualWidth
             });
-
-            image.visualRange.left = image.left + +(image.width - image.newVisualWidth) / 2;
 
             image.setCoords();
 
