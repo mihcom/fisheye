@@ -1,4 +1,4 @@
-define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function (fabric, _, $) {
+define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'], function (fabric, _, $, createjs) {
     'use strict';
 
     var Fisheye = function (options) {
@@ -48,26 +48,25 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
                 spriteImage.left = -imageWidth * i;
                 tempCanvas.renderAll();
 
-                //var context = tempCanvas.getContext();
-                //context.strokeStyle = 'green';
-                //context.strokeRect(0, 0, imageWidth, imageHeight);
-
                 var image = new window.Image();
                 image.src = tempCanvas.toDataURL();
 
-                var spriteElement = new fabric.Image(image, {
-                    selectable: false,
-                    width: imageWidth,
-                    height: imageHeight,
-                    left: i * imageWidth,
-                    visualWidth: imageWidth,
-                    index: i
-                });
+                var line = new fabric.Line([0, 0, 0, imageHeight], { strokeWidth: 1, stroke: 'black', top : 0}),
+                    spriteElement = new fabric.Image(image, {
+                        selectable: false,
+                        width: imageWidth,
+                        height: imageHeight,
+                        left: i * imageWidth,
+                        visualWidth: imageWidth,
+                        line: line,
+                        index: i
+                    });
 
                 spriteElement.clipTo = this.applyFishEyeToImage.bind(this, spriteElement);
 
                 this.images.push(spriteElement);
                 this.canvas.add(spriteElement);
+                this.canvas.add(spriteElement.line);
             }
 
             this.updateFishEye();
@@ -115,6 +114,24 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
     Fisheye.prototype.updateFishEye = function (options) {
         options = options || {};
 
+        if (!options.pointer) {
+            //delete this.pointer;
+        }
+        else {
+            if (!this.pointer) {
+                this.pointer = options.pointer;
+            }
+            else {
+                //new createjs.Tween(this.pointer, {
+                //    override: true,
+                //    onChange: this.updateFishEye.bind(this)
+                //}).to({
+                //    x: options.pointer.x
+                //}, 400, createjs.Ease.circOut);
+                this.pointer = options.pointer;
+            }
+        }
+
         var newVisualWidth = this.canvas.width / this.options.spriteImagesCount,
             totalWidth = 0,
             length = this.images.length,
@@ -126,9 +143,9 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
         for (var i = 0, length = this.images.length; i < length; i++) {
             image = this.images[i];
 
-            if (options.pointer) {
+            if (this.pointer) {
                 var centerXCoordinate = image.left + image.width / 2,
-                    distanceFromCenterToMouse = options.pointer.x - centerXCoordinate,
+                    distanceFromCenterToMouse = this.pointer.x - centerXCoordinate,
                     normalizedDistanceFromCenterToMouse = distanceFromCenterToMouse / WAVE_WING_WIDTH,
                     weight = -Math.pow(Math.abs(normalizedDistanceFromCenterToMouse), 1.4) + 1,
                     calculatedNewVisualWidth = image.width * weight;
@@ -154,23 +171,23 @@ define(['fabric', 'lodash', 'jquery', 'helpers/requestAnimationFrame'], function
             image = this.images[i];
 
             image.set({
-                left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2
-            });
-
-            //image.animate({
-            //    left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2,
-            //    visualWidth: image.newVisualWidth
-            //}, {
-            //    duration: 100,
-            //    easing: fabric.util.ease.easeOutExpo
-            //});
-
-            image.set({
                 left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2,
                 visualWidth: image.newVisualWidth
+                //visible: false
             });
 
-            image.setCoords();
+            //if (i === 1){
+            //    if (Math.abs((this.im1 || 0) - image.left) >= 1){
+            //        window.console.log(this.im1, image.left);
+            //        this.im1 = image.left;
+            //    }
+            //}
+
+            image.line.set({
+                left: image.left + (image.newVisualWidth + image.width) / 2,
+            });
+
+            image.line.bringToFront();
 
             this.positionAccumulator += image.newVisualWidth;
         }
