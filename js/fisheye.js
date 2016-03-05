@@ -1,4 +1,4 @@
-define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'], function (fabric, _, $, createjs) {
+define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'], function (fabric, _, $, Stats) {
     'use strict';
 
     var Fisheye = function (options) {
@@ -16,6 +16,8 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
 
         this.options = options;
 
+        this.outputPerformanceStats();
+
         this.loadImages();
 
         return {};
@@ -26,7 +28,10 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
             canvas = new fabric.Canvas(this.options.canvas, {
                 width: $('body').width(),
                 height: 225,
-                renderOnAddRemove: false
+                renderOnAddRemove: false,
+                controlsAboveOverlay: false,
+                stateful: false,
+                selection: false
             });
 
         this.canvas = canvas;
@@ -51,14 +56,12 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
                 var image = new window.Image();
                 image.src = tempCanvas.toDataURL();
 
-                var line = new fabric.Line([0, 0, 0, imageHeight], { strokeWidth: 1, stroke: 'black', top : 0}),
-                    spriteElement = new fabric.Image(image, {
+                var spriteElement = new fabric.Image(image, {
                         selectable: false,
                         width: imageWidth,
                         height: imageHeight,
                         left: i * imageWidth,
                         visualWidth: imageWidth,
-                        line: line,
                         index: i
                     });
 
@@ -66,7 +69,6 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
 
                 this.images.push(spriteElement);
                 this.canvas.add(spriteElement);
-                this.canvas.add(spriteElement.line);
             }
 
             this.updateFishEye();
@@ -89,9 +91,15 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
             $(this.options.canvas).parent().mouseout(this.updateFishEye.bind(this));
 
             var updateCanvas = function () {
+                this.stats.begin();
+
                 canvas.renderAll();
+                this.renderImagesSeparator();
+
                 window.requestAnimationFrame(updateCanvas);
-            };
+
+                this.stats.end();
+            }.bind(this);
 
             window.requestAnimationFrame(updateCanvas);
 
@@ -147,10 +155,11 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
                 var centerXCoordinate = image.left + image.width / 2,
                     distanceFromCenterToMouse = this.pointer.x - centerXCoordinate,
                     normalizedDistanceFromCenterToMouse = distanceFromCenterToMouse / WAVE_WING_WIDTH,
-                    weight = -Math.pow(Math.abs(normalizedDistanceFromCenterToMouse), 1.4) + 1,
-                    calculatedNewVisualWidth = image.width * weight;
+                    weight = 1 - Math.pow(Math.abs(normalizedDistanceFromCenterToMouse), 1.4),
+                    calculatedNewVisualWidth = Math.round(image.width * weight);
 
                 image.newVisualWidth = Math.max(newVisualWidth, calculatedNewVisualWidth);
+                //image.scale(calculatedNewVisualWidth / newVisualWidth);
             }
             else {
                 image.newVisualWidth = newVisualWidth;
@@ -173,24 +182,31 @@ define(['fabric', 'lodash', 'jquery', 'tweenjs', 'helpers/requestAnimationFrame'
             image.set({
                 left: this.positionAccumulator + (image.newVisualWidth - image.width ) / 2,
                 visualWidth: image.newVisualWidth
-                //visible: false
             });
-
-            //if (i === 1){
-            //    if (Math.abs((this.im1 || 0) - image.left) >= 1){
-            //        window.console.log(this.im1, image.left);
-            //        this.im1 = image.left;
-            //    }
-            //}
-
-            image.line.set({
-                left: image.left + (image.newVisualWidth + image.width) / 2,
-            });
-
-            image.line.bringToFront();
 
             this.positionAccumulator += image.newVisualWidth;
         }
+    };
+
+    Fisheye.prototype.renderImagesSeparator = function () {
+        var context = this.canvas.getContext();
+
+        for (var i = 0, length = this.images.length; i < length; i++) {
+            var image = this.images[i],
+                rightBorder = image.left + (image.width + image.visualWidth) / 2;
+
+            context.beginPath();
+            context.moveTo(rightBorder, 0);
+            context.lineTo(rightBorder, image.height);
+            context.stroke();
+        }
+    };
+
+    Fisheye.prototype.outputPerformanceStats = function () {
+        this.stats = new Stats();
+        this.stats.setMode(0); // 0: fps, 1: ms, 2: mb
+
+        document.body.appendChild(this.stats.domElement);
     };
 
     return Fisheye;

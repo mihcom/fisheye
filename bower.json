@@ -22,6 +22,7 @@
     "text": "requirejs-text#^2.0.14",
     "lodash": "^4.5.1",
     "jquery": "^2.2.1",
-    "TweenJS": "^0.6.2"
+    "TweenJS": "^0.6.2",
+    "stats.js": "*"
   }
 }
