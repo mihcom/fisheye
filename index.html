@@ -6,7 +6,24 @@
     <link rel="stylesheet" href="css/bundle.min.css" type="text/css"/>
 </head>
 <body>
-    <canvas></canvas>
+    <section>
+        Sprite example
+<pre>
+<code class="javascript">    var canvas = document.querySelector('#sprite-example'),
+        options = {
+            canvas: canvas,
+            imageUrl: '/images/marc-jacobs.jpg',
+            spriteImagesCount: 41
+        };
+
+    new Fisheye(options);
+</code>
+</pre>
+        <canvas id="sprite-example"></canvas>
+    </section>
+    <section>
+        Separate images example
+    </section>
     <script data-main="js/app" src="bower_components/requirejs/require.js"></script>
 </body>
 </html>

@@ -16,9 +16,9 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
 
         this.options = options;
 
-        this.outputPerformanceStats();
-
         this.loadImages();
+
+        this.outputPerformanceStats();
 
         return {};
     };
@@ -26,7 +26,6 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
     Fisheye.prototype.loadImages = function () {
         var ready = new $.Deferred(),
             canvas = new fabric.Canvas(this.options.canvas, {
-                width: $('body').width(),
                 height: 225,
                 renderOnAddRemove: false,
                 controlsAboveOverlay: false,
@@ -74,8 +73,8 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
             this.updateFishEye();
 
             var onResize = function () {
-                var windowWidth = $('body').width();
-                this.canvas.setWidth(windowWidth);
+                var canvasWidth = $(this.options.canvas).parent().parent().width();
+                this.canvas.setWidth(canvasWidth);
                 this.updateFishEye();
             }.bind(this);
 
@@ -203,10 +202,18 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
     };
 
     Fisheye.prototype.outputPerformanceStats = function () {
+        var canvasElement = $(this.canvas.getElement());
+
         this.stats = new Stats();
         this.stats.setMode(0); // 0: fps, 1: ms, 2: mb
 
-        document.body.appendChild(this.stats.domElement);
+        $(this.stats.domElement)
+            .appendTo(canvasElement.parent())
+            .css({
+                position: 'absolute',
+                top: canvasElement.height() - 48,
+                left: 0
+            });
     };
 
     return Fisheye;
