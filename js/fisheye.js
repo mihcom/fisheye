@@ -16,25 +16,14 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
 
         this.options = options;
 
-        this.loadImages();
-
-        this.outputPerformanceStats();
+        $.when(this.loadImages()).then(this.outputPerformanceStats.bind(this));
 
         return {};
     };
 
-    Fisheye.prototype.loadImages = function () {
-        var ready = new $.Deferred(),
-            canvas = new fabric.Canvas(this.options.canvas, {
-                height: 225,
-                renderOnAddRemove: false,
-                controlsAboveOverlay: false,
-                stateful: false,
-                selection: false
-            });
-
-        this.canvas = canvas;
-        this.images = [];
+    Fisheye.prototype.loadImagesFromSprite = function () {
+        var deferred = new $.Deferred(),
+            images = [];
 
         fabric.Image.fromURL(this.options.imageUrl, function (spriteImage) {
             var tempCanvas = new fabric.StaticCanvas(),
@@ -56,19 +45,71 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
                 image.src = tempCanvas.toDataURL();
 
                 var spriteElement = new fabric.Image(image, {
-                        selectable: false,
-                        width: imageWidth,
-                        height: imageHeight,
-                        left: i * imageWidth,
-                        visualWidth: imageWidth,
-                        index: i
-                    });
+                    width: imageWidth,
+                    height: imageHeight,
+                    left: i * imageWidth
+                });
 
                 spriteElement.clipTo = this.applyFishEyeToImage.bind(this, spriteElement);
 
-                this.images.push(spriteElement);
-                this.canvas.add(spriteElement);
+                images.push(spriteElement);
             }
+
+            deferred.resolve(images);
+        }.bind(this));
+
+        return deferred.promise();
+    };
+
+    Fisheye.prototype.loadImagesFromSet = function () {
+        var deferred = new $.Deferred(),
+            images = [],
+            promises = _.map(this.options.imageUrl, function (url, index) {
+                var imageDeferred = new $.Deferred();
+
+                fabric.Image.fromURL(url, function (image) {
+                    images[index] = image;
+                    imageDeferred.resolve();
+                });
+
+                return imageDeferred.promise();
+            });
+
+        $.when.apply($, promises).then(deferred.resolve.bind(deferred, images));
+
+        return deferred.promise();
+    };
+
+    Fisheye.prototype.loadImages = function () {
+        var ready = new $.Deferred(),
+            canvas = new fabric.Canvas(this.options.canvas, {
+                renderOnAddRemove: false,
+                controlsAboveOverlay: false,
+                stateful: false,
+                selection: false
+            }),
+            imageLoad = _.isString(this.options.imageUrl) ? this.loadImagesFromSprite() : this.loadImagesFromSet();
+
+        this.canvas = canvas;
+
+        $.when(imageLoad).then(function (images) {
+            this.images = images;
+
+            _.each(this.images, function (image, index) {
+                image.set({
+                    selectable: false,
+                    left: index * image.width,
+                    visualWidth: image.width,
+                    clipTo: this.applyFishEyeToImage.bind(this, image)
+                });
+
+                this.canvas.add(image);
+            }.bind(this));
+
+            this.canvas.setDimensions({
+                width: $(this.options.canvas).width(),
+                height: this.images[0].height
+            });
 
             this.updateFishEye();
 
@@ -110,11 +151,8 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
 
     Fisheye.prototype.applyFishEyeToImage = function (image, context) {
         context.save();
-
         context.translate(-image.visualWidth / 2, -image.height / 2);
-
-        context.rect(0, 0, image.visualWidth, 225);
-
+        context.rect(0, 0, image.visualWidth, image.height);
         context.restore();
     };
 
@@ -122,7 +160,7 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
         options = options || {};
 
         if (!options.pointer) {
-            //delete this.pointer;
+            delete this.pointer;
         }
         else {
             if (!this.pointer) {
@@ -139,7 +177,7 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
             }
         }
 
-        var newVisualWidth = this.canvas.width / this.options.spriteImagesCount,
+        var newVisualWidth = this.canvas.width / this.images.length,
             totalWidth = 0,
             length = this.images.length,
             WAVE_WING_WIDTH = 350,

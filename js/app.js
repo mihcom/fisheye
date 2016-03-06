@@ -24,12 +24,30 @@ require(['./fisheye', 'highlightjs'], function (Fisheye, hljs) {
 
     hljs.initHighlighting();
 
-    var canvas = document.querySelector('#sprite-example'),
-        options = {
-            canvas: canvas,
-            imageUrl: '/images/marc-jacobs.jpg',
-            spriteImagesCount: 41
-        };
+    (function () {
+        var canvas = document.querySelector('#sprite-example'),
+            options = {
+                canvas: canvas,
+                imageUrl: '/images/marc-jacobs.jpg',
+                spriteImagesCount: 41
+            };
 
-    new Fisheye(options);
+        new Fisheye(options);
+    }());
+
+    (function () {
+        var canvas = document.querySelector('#image-set-example'),
+            options = {
+                canvas: canvas,
+                imageUrl: [
+                    'http://static.pandora.net/consumer/jewellery/01/400x400/750841CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190888CFP.jpg',
+                    'http://static.pandora.net/consumer/jewellery/01/400x400/190888NCK.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190900EN12.jpg',
+                    'http://static.pandora.net/consumer/jewellery/01/400x400/190903PCZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190904CZ.jpg',
+                    'http://static.pandora.net/consumer/jewellery/01/400x400/290544CFP.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/290544NCK.jpg',
+                    'http://static.pandora.net/consumer/jewellery/01/400x400/290552ACZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/290552LCZ.jpg',
+                    'http://static.pandora.net/consumer/jewellery/01/400x400/290553CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/390961COE-100.jpg']
+            };
+
+        new Fisheye(options);
+    }());
 });
