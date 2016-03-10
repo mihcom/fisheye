@@ -22,9 +22,9 @@
     "text": "requirejs-text#^2.0.14",
     "lodash": "^4.5.1",
     "jquery": "^2.2.1",
-    "TweenJS": "^0.6.2",
     "stats.js": "*",
     "highlightjs": "^9.2.0",
-    "normalize-css": "^3.0.3"
+    "normalize-css": "^3.0.3",
+    "d3": "^3.5.16"
   }
 }
