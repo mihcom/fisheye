@@ -100,10 +100,12 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
                     selectable: false,
                     left: index * image.width,
                     visualWidth: image.width,
-                    clipTo: this.applyFishEyeToImage.bind(this, image)
+                    clipTo: this.applyFishEyeToImage.bind(this, image),
+                    debugText: new fabric.Text('', {fontSize: 20, originX: 'center'})
                 });
 
                 this.canvas.add(image);
+                this.canvas.add(image.debugText);
             }.bind(this));
 
             this.canvas.setDimensions({
@@ -180,7 +182,7 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
         var newVisualWidth = this.canvas.width / this.images.length,
             totalWidth = 0,
             length = this.images.length,
-            WAVE_WING_WIDTH = 350,
+            WAVE_WING_WIDTH = this.canvas.width / 2,
             image;
 
         this.positionAccumulator = 0;
@@ -190,13 +192,15 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
 
             if (this.pointer) {
                 var centerXCoordinate = image.left + image.width / 2,
-                    distanceFromCenterToMouse = this.pointer.x - centerXCoordinate,
+                    distanceFromCenterToMouse = Math.abs(this.pointer.x - centerXCoordinate),
                     normalizedDistanceFromCenterToMouse = distanceFromCenterToMouse / WAVE_WING_WIDTH,
-                    weight = 1 - Math.pow(Math.abs(normalizedDistanceFromCenterToMouse), 1.4),
+                    weight = (0.4 - Math.pow(normalizedDistanceFromCenterToMouse, 1.4)) / 0.4,
                     calculatedNewVisualWidth = Math.round(image.width * weight);
 
                 image.newVisualWidth = Math.max(newVisualWidth, calculatedNewVisualWidth);
-                //image.scale(calculatedNewVisualWidth / newVisualWidth);
+                image.debugText.setText(' center ' + centerXCoordinate + ', distance ' + distanceFromCenterToMouse.toFixed(1) + '\n normalized ' +  normalizedDistanceFromCenterToMouse.toFixed(2) + '\n weight ' + weight.toFixed(2));
+
+                //window.console.log('X', this.pointer.x, '$' + i + ' center', centerXCoordinate, 'distance', distanceFromCenterToMouse, 'normalized', normalizedDistanceFromCenterToMouse);
             }
             else {
                 image.newVisualWidth = newVisualWidth;
@@ -205,13 +209,15 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
             totalWidth += image.newVisualWidth;
         }
 
-        if (totalWidth > this.canvas.width) {
-            var scaleFactor = this.canvas.width / totalWidth;
-
-            for (i = 0; i < length; i++) {
-                this.images[i].newVisualWidth *= scaleFactor;
-            }
-        }
+        //if (totalWidth > this.canvas.width) {
+        //    var notEnlargedImages = _.filter(this.images, function (image) { return image.newVisualWidth === newVisualWidth; }),
+        //        scaleFactor = 1 - (totalWidth - this.canvas.width) / notEnlargedImages.length / newVisualWidth;
+        //
+        //    _.each(notEnlargedImages, function (image) {
+        //        image.newVisualWidth *= scaleFactor;
+        //        image.debugText.setText(image.debugText.getText() + '\n scaled down to ' + image.newVisualWidth.toFixed(1));
+        //    });
+        //}
 
         for (i = 0; i < length; i++) {
             image = this.images[i];
@@ -221,6 +227,8 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
                 visualWidth: image.newVisualWidth
             });
 
+            image.debugText.left = image.left + image.width / 2;
+
             this.positionAccumulator += image.newVisualWidth;
         }
     };
@@ -228,15 +236,33 @@ define(['fabric', 'lodash', 'jquery', 'stats', 'helpers/requestAnimationFrame'],
     Fisheye.prototype.renderImagesSeparator = function () {
         var context = this.canvas.getContext();
 
+        context.beginPath();
+
         for (var i = 0, length = this.images.length; i < length; i++) {
             var image = this.images[i],
                 rightBorder = image.left + (image.width + image.visualWidth) / 2;
 
-            context.beginPath();
             context.moveTo(rightBorder, 0);
             context.lineTo(rightBorder, image.height);
-            context.stroke();
         }
+
+        //context.strokeStyle = '#000000';
+        //context.stroke();
+        //
+        //context.beginPath();
+        //
+        //if (this.pointer) {
+        //    var WAVE_WING_WIDTH = 400;
+        //
+        //    context.moveTo(this.pointer.x - WAVE_WING_WIDTH, 0);
+        //    context.lineTo(this.pointer.x - WAVE_WING_WIDTH, this.images[0].height);
+        //
+        //    context.moveTo(this.pointer.x + WAVE_WING_WIDTH, 0);
+        //    context.lineTo(this.pointer.x + WAVE_WING_WIDTH, this.images[0].height);
+        //}
+        //
+        //context.strokeStyle = '#ff0000';
+        context.stroke();
     };
 
     Fisheye.prototype.outputPerformanceStats = function () {
