@@ -12,5 +12,6 @@
     "gulp-rename": "^1.2.2",
     "gulp-sourcemaps": "^1.6.0"
   },
-  "private": true
+  "private": true,
+  "dependencies": {}
 }

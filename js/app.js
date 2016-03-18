@@ -7,7 +7,8 @@ requirejs.config({
         jquery: '/bower_components/jquery/dist/jquery.min',
         stats: '/bower_components/stats.js/build/stats.min',
         highlightjs: '/bower_components/highlightjs/highlight.pack.min',
-        d3: '/bower_components/d3/d3.min'
+        d3: '/bower_components/d3/d3.min',
+        'd3.fisheye': '/js/helpers/d3.fisheye'
     },
 
     shim: {
@@ -16,14 +17,18 @@ requirejs.config({
         tweenjs: {exports: 'createjs'},
         stats: {exports: 'Stats'},
         highlightjs: {exports: 'hljs'},
-        d3: {exports: 'd3'}
+        d3: {exports: 'd3'},
+        'd3.fisheye': {
+            deps: ['d3'],
+            exports: 'd3.fisheye'
+        }
     }
 });
 
 require(['./canvas-fisheye', 'highlightjs'], function (Fisheye, hljs) {
     'use strict';
 
-    //hljs.initHighlighting();
+    // hljs.initHighlighting();
 
     (function () {
         var canvas = document.querySelector('#sprite-example'),

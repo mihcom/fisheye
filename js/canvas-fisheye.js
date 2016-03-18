@@ -1,4 +1,4 @@
-define(['lodash', 'jquery', 'stats'], function (_, $, Stats) {
+define(['lodash', 'jquery', 'd3', 'd3.fisheye', 'stats'], function (_, $, d3, fisheye, Stats) {
     'use strict';
 
     var Fisheye = function (options) {
@@ -14,7 +14,7 @@ define(['lodash', 'jquery', 'stats'], function (_, $, Stats) {
             throw new Error('Please specify image url');
         }
 
-        this.options = options;
+        this.options = _.defaults(options, {distortion: 2});
 
         $.when(this.loadAssets()).then(this.run.bind(this));
 
@@ -63,19 +63,77 @@ define(['lodash', 'jquery', 'stats'], function (_, $, Stats) {
     Fisheye.prototype.loadImagesFromSet = _.noop;
 
     Fisheye.prototype.updateFisheye = function () {
-        this.stats.begin();
-
         var canvasWidth = this.options.canvas.width,
             canvasHeight = this.options.canvas.height,
-            imageCropWidth = canvasWidth / this.images.length;
+            imageCropWidth = canvasWidth / this.images.length,
+            data = d3.range(0, canvasWidth, imageCropWidth),
+            detachedContainer = document.createElement('custom'),
+            dataContainer = d3.select(detachedContainer),
+            dataBinding = dataContainer.selectAll('custom').data(data),
+            xFisheye = d3.fisheye.scale(d3.scale.identity)
+                .domain([0, canvasWidth])
+                .focus(canvasWidth / 2)
+                .distortion(0),
+            canvas = this.canvas,
+            images = this.images,
+            update = function () {
+                this.stats.begin();
 
-        this.canvas.clearRect(0, 0, canvasWidth, canvasHeight);
+                this.canvas.clearRect(0, 0, canvasWidth, canvasHeight);
 
-        _.each(this.images, function (image, index) {
-            this.canvas.drawImage(image, (image.width - imageCropWidth ) / 2, 0, imageCropWidth, canvasHeight, index * imageCropWidth, 0, imageCropWidth, canvasHeight);
-        }.bind(this));
+                var elements = dataContainer.selectAll('custom');
 
-        this.stats.end();
+                canvas.strokeStyle = 'black';
+                canvas.beginPath();
+
+                elements.each(function (value, index) {
+                    var node = d3.select(this),
+                        nextNode = elements.filter(function (d, i) {
+                            return i === index + 1;
+                        }),
+                        currentNodeX = node.attr('x'),
+                        nextNodeX = nextNode.size() ? nextNode.attr('x') : canvasWidth,
+                        image = images[index],
+                        imagePartWidth = Math.min(nextNodeX - currentNodeX, image.width);
+
+                    canvas.moveTo(currentNodeX, 0);
+                    canvas.lineTo(currentNodeX, canvasHeight);
+
+                    canvas.drawImage(image,
+                        (image.width - imagePartWidth) / 2, 0, imagePartWidth, canvasHeight,
+                        currentNodeX, 0, imagePartWidth, canvasHeight);
+
+                    // canvas.drawImage(image, (image.width - width ) / 2, 0, width,
+                    //     canvasHeight, xPosition, 0, width, canvasHeight);
+                    //
+                    // if (index <= 1){
+                    //     window.console.log(index, xPosition, width);
+                    // }
+                });
+
+                canvas.stroke();
+
+                this.stats.end();
+            }.bind(this);
+
+        dataBinding.enter()
+            .append('custom')
+            .attr('x', xFisheye);
+
+        var setDistortion = function (distortion, e){
+            xFisheye.focus(e.clientX).distortion(distortion);
+
+            dataBinding
+                .transition()
+                .ease('cubic-out')
+                .duration(500)
+                .attr('x', xFisheye)
+        };
+
+        $(this.options.canvas).mousemove(setDistortion.bind(this, this.options.distortion));
+        $(this.options.canvas).mouseout(setDistortion.bind(this, 0));
+
+        d3.timer(update);
     };
 
     Fisheye.prototype.run = function () {
@@ -89,7 +147,7 @@ define(['lodash', 'jquery', 'stats'], function (_, $, Stats) {
 
         this.updateFisheye();
 
-        $(window).resize(function (){
+        $(window).resize(function () {
             this.options.canvas.width = $(this.options.canvas).width();
             this.updateFisheye();
         }.bind(this));
