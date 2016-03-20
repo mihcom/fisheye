@@ -80,7 +80,7 @@ define(['underscore', 'backbone', 'jquery', 'd3', 'd3.fisheye'], function (_, Ba
 
         var canvasWidth = this.options.canvas.width,
             canvasHeight = this.options.canvas.height,
-            imageHeight =this.images[0].height,
+            imageHeight = this.images[0].height,
             leftOffset = $(this.options.canvas).offset().left,
             imageCropWidth = canvasWidth / this.images.length,
             data = d3.range(0, canvasWidth, imageCropWidth),
@@ -95,6 +95,18 @@ define(['underscore', 'backbone', 'jquery', 'd3', 'd3.fisheye'], function (_, Ba
             canvas = this.canvas,
             images = this.images,
             fishEyeApplied = this.fishEyeApplied = {},
+            getFocusedImage = function () {
+                if (xFisheye.distortion() === 0) {
+                    return undefined;
+                }
+
+                var focus = xFisheye.focus(),
+                    focusedImage = _.find(images, function (image) {
+                        return (image.position <= focus) && (image.position + image.visualWidth >= focus);
+                    });
+
+                return focusedImage;
+            },
             update = function () {
                 this.canvas.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -128,21 +140,16 @@ define(['underscore', 'backbone', 'jquery', 'd3', 'd3.fisheye'], function (_, Ba
 
                 canvas.stroke();
 
-                if (xFisheye.distortion() > 0){
-                    var focus = xFisheye.focus(),
-                        focusedImage = _.find(images, function (image) {
-                            return (image.position <= focus) && (image.position + image.visualWidth >= focus);
-                        });
+                var focusedImage = getFocusedImage();
 
-                    if (focusedImage){
-                        canvas.strokeStyle = 'silver';
-                        canvas.beginPath();
+                if (focusedImage) {
+                    canvas.strokeStyle = 'silver';
+                    canvas.beginPath();
 
-                        canvas.moveTo(focusedImage.position, canvasHeight - 1);
-                        canvas.lineTo(focusedImage.position + focusedImage.visualWidth, canvasHeight - 1);
+                    canvas.moveTo(focusedImage.position, canvasHeight - 1);
+                    canvas.lineTo(focusedImage.position + focusedImage.visualWidth, canvasHeight - 1);
 
-                        canvas.stroke();
-                    }
+                    canvas.stroke();
                 }
 
                 return fishEyeApplied.cancel;
@@ -165,8 +172,8 @@ define(['underscore', 'backbone', 'jquery', 'd3', 'd3.fisheye'], function (_, Ba
                 .transition()
                 .ease('cubic-out')
                 .duration(300)
-                .tween('fisheye', function (){
-                    return function() {
+                .tween('fisheye', function () {
+                    return function () {
                         triggerChange();
                     };
                 })
@@ -179,6 +186,16 @@ define(['underscore', 'backbone', 'jquery', 'd3', 'd3.fisheye'], function (_, Ba
 
         $(this.options.canvas).off('mousemove touchstart touchmove').on('touchstart touchmove mousemove', setDistortion.bind(this, distortion));
         $(this.options.canvas).off('mouseout touchend').on('mouseout touchend', setDistortion.bind(this, 0));
+        $(this.options.canvas).off('click').on('click', function(){
+            var focusedImage = getFocusedImage();
+
+            if (!focusedImage){
+                return;
+            }
+
+            var index = _.indexOf(images, focusedImage);
+            this.trigger('click', index);
+        }.bind(this));
 
         _.defer(triggerChange);
 

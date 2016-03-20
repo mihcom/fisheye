@@ -32,7 +32,7 @@ requirejs.config({
             exports: 'Marionette'
         },
         app: {
-            deps: ['config/templatesettings', 'config/view']
+            deps: ['config/templatesettings', 'config/view', 'config/string.format']
         }
     }
 });

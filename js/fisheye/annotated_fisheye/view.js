@@ -47,6 +47,7 @@ define(['app', 'underscore', 'jquery', 'text!./template.html', './annotation_vie
 
                     $.when(this.fishEye.ready()).then(function () {
                         this.listenTo(this.fishEye, 'change', this.positionAnnotations);
+                        this.listenTo(this.fishEye, 'click', this.trigger.bind(this, 'image:clicked'));
                         this.positionAnnotations();
                     }.bind(this));
                 },

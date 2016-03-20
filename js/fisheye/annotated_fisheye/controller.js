@@ -8,7 +8,12 @@ define(['underscore', 'jquery', 'app', './view'], function (_, $, App, View) {
                 var model = this.getModel(options),
                     view = this.getView(model);
 
+                this.listenTo(view, 'image:clicked', this.displayImage);
+
                 this.show(options.el, view);
+            },
+
+            displayImage: function (index) {
             },
 
             getModel: function (options) {
