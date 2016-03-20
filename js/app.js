@@ -6,7 +6,7 @@ define(['jquery', 'marionette'], function ($, Marionette) {
             runExamples: function () {
                 require(['fisheye/annotated_fisheye/controller'], function (AnnotatedFisheye) {
                     var options = {
-                        el: $('section'),
+                        el: $('[data-role="demo"]'),
                         imageUrl: '/images/marc-jacobs.jpg',
                         spriteImagesCount: 41,
                         distortion: 2,

@@ -6,8 +6,12 @@ define(['app', 'underscore', 'jquery', 'text!./template.html', './annotation_vie
             AnnotatedFisheye.View = Marionette.CompositeView.extend({
                 template: _.template(template),
                 childView: AnnotationView,
-                childViewContainer: 'ul',
+                childViewContainer: '@ui.annotationsContainer',
                 className: 'annotated-fisheye',
+
+                ui: {
+                    annotationsContainer: 'ul'
+                },
 
                 initialize: function () {
                     this.collection = this.getCollection();
@@ -53,6 +57,15 @@ define(['app', 'underscore', 'jquery', 'text!./template.html', './annotation_vie
                             visualRange = this.fishEye.getVisualRange(range);
 
                         childView.setVisualRange(visualRange);
+                    }.bind(this));
+
+                    _.defer(function () {
+                        var heights = this.children.map(function (childView) {
+                                return childView.$el.outerHeight();
+                            }),
+                            maxHeight = _.max(heights);
+
+                        this.ui.annotationsContainer.height(maxHeight + 10);
                     }.bind(this));
                 }
             });
