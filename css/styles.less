@@ -1,6 +1,6 @@
 @import url(https://fonts.googleapis.com/css?family=Open+Sans);
-@import (css) "/bower_components/highlightjs/styles/zenburn.css";
 @import (css) "/bower_components/normalize-css/normalize.css";
+@import (css) "/css/lib/SyntaxHighlighter/shCoreDjango.css";
 
 body {
   font-family: 'Open Sans', sans-serif;
@@ -9,7 +9,7 @@ body {
 
 section {
   border: 1px solid silver;
-  background-color: #9acdff;
+  background-color: #e0e8ff;
   padding: 10px;
   margin-bottom: 10px;
 }
@@ -18,6 +18,8 @@ canvas {
   width: 100%;
 }
 
-pre {
-  margin: 10px 0 0 0;
+*:not(input):not(textarea) {
+  -webkit-user-select: none; /* disable selection/Copy of UIWebView */
+  -webkit-touch-callout: none; /* disable the IOS popup when long-press on a link */
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
 }

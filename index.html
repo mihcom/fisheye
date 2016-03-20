@@ -4,42 +4,46 @@
     <meta charset="UTF-8">
     <title>Canvas fish eye demo</title>
     <link rel="stylesheet" href="css/bundle.min.css" type="text/css"/>
+    <script type="text/javascript" src="js/lib/SyntaxHighlighter/shCore.js"></script>
+    <script type="text/javascript" src="js/lib/SyntaxHighlighter/shBrushJScript.js"></script>
+    <script type="text/javascript">SyntaxHighlighter.all();</script>
 </head>
 <body>
     <section>
         Sprite example
-<pre>
-<code class="javascript">    var canvas = document.querySelector('#sprite-example'),
-        options = {
-            canvas: canvas,
-            imageUrl: '/images/marc-jacobs.jpg',
-            spriteImagesCount: 41
-        };
+        <pre class="brush: js;">
+var canvas = document.querySelector('#sprite-example'),
+    options = {
+        canvas: canvas, // where to render
+        imageUrl: '/images/marc-jacobs.jpg', // sprite
+        spriteImagesCount: 41 // how many images in sprite
+        distortion: 2 // distortion level (default is 'max')
+    };
 
-    new Fisheye(options);
-</code>
-</pre>
+new Fisheye(options);
+        </pre>
         <canvas id="sprite-example"></canvas>
     </section>
 
-    <!--<section>-->
-        <!--Image set example-->
-<!--<pre>-->
-<!--<code class="javascript"> var canvas = document.querySelector('#image-set-example'),-->
-    <!--options = {-->
-    <!--canvas: canvas,-->
-    <!--imageUrl: [ 'http://static.pandora.net/consumer/jewellery/01/400x400/750841CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190888CFP.jpg',-->
-                <!--'http://static.pandora.net/consumer/jewellery/01/400x400/190888NCK.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190900EN12.jpg',-->
-                <!--'http://static.pandora.net/consumer/jewellery/01/400x400/190903PCZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190904CZ.jpg',-->
-                <!--'http://static.pandora.net/consumer/jewellery/01/400x400/290544CFP.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/290544NCK.jpg',-->
-                <!--'http://static.pandora.net/consumer/jewellery/01/400x400/290552ACZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/290552LCZ.jpg',-->
-                <!--'http://static.pandora.net/consumer/jewellery/01/400x400/290553CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/390961COE-100.jpg']-->
-    <!--};-->
+    <section>
+        Image set example
+        <pre class="brush: js">
+var canvas = document.querySelector('#image-set-example'),
+    options = {
+    canvas: canvas,
+    // specify images as an array - then we can skip spriteImagesCount option
+    imageUrl: [ 'http://static.pandora.net/consumer/jewellery/01/400x400/750841CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190888CFP.jpg',
+                'http://static.pandora.net/consumer/jewellery/01/400x400/190888NCK.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190900EN12.jpg',
+                'http://static.pandora.net/consumer/jewellery/01/400x400/190903PCZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190904CZ.jpg',
+                'http://static.pandora.net/consumer/jewellery/01/400x400/290544CFP.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/290544NCK.jpg',
+                'http://static.pandora.net/consumer/jewellery/01/400x400/290552ACZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/290552LCZ.jpg',
+                'http://static.pandora.net/consumer/jewellery/01/400x400/290553CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/390961COE-100.jpg']
+    };
 
-    <!--new Fisheye(options);-->
-<!--</code>-->
-        <!--<canvas id="image-set-example"></canvas>-->
-    <!--</section>-->
+    new Fisheye(options);
+        </pre>
+    <canvas id="image-set-example"></canvas>
+    </section>
     <script data-main="js/app" src="bower_components/requirejs/require.js"></script>
 </body>
 </html>

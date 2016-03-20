@@ -1,5 +1,6 @@
 bower_components
 node_modules
-css/*.css
+css/*.min.css
+css/*.min.css.map
 **/*.map
 .idea
