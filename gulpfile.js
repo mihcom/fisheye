@@ -8,7 +8,7 @@ var gulp = require('gulp'),
     connect = require('gulp-connect'),
     paths = {
         CSS: ['css/**/*.less'],
-        HTML: ['./index.html'],
+        HTML: ['./index.html', './js/**/*.html'],
         JS: ['js/**/*.js']
     };
 

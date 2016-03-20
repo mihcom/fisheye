@@ -1,25 +1,14 @@
-define(['lodash', 'jquery', 'd3', 'd3.fisheye'], function (_, $, d3) {
+define(['underscore', 'backbone', 'jquery', 'd3', 'd3.fisheye'], function (_, Backbone, $, d3) {
     'use strict';
 
     var Fisheye = function (options) {
-        if (!_.isPlainObject(options)) {
-            throw new Error('Please provide options (plain object)');
-        }
-
-        if (!_.isElement(options.canvas)) {
-            throw new Error('Please specify canvas');
-        }
-
-        if (_.isEmpty(options.imageUrl)) {
-            throw new Error('Please specify image url');
-        }
-
         this.options = _.defaults(options, {distortion: 'max'});
+        this.started = new $.Deferred();
 
         $.when(this.loadAssets()).then(this.run.bind(this));
-
-        return {};
     };
+
+    _.extend(Fisheye.prototype, Backbone.Events);
 
     Fisheye.prototype.loadAssets = function () {
         var ready = new $.Deferred(),
@@ -96,6 +85,9 @@ define(['lodash', 'jquery', 'd3', 'd3.fisheye'], function (_, $, d3) {
             detachedContainer = document.createElement('custom'),
             dataContainer = d3.select(detachedContainer),
             dataBinding = dataContainer.selectAll('custom').data(data),
+            triggerChange = _.throttle(function () {
+                this.trigger('change');
+            }.bind(this), 1),
             xFisheye = d3.fisheye.scale(d3.scale.identity).domain([0, canvasWidth]).distortion(0),
             distortion = this.calculateDistortion(xFisheye, data),
             canvas = this.canvas,
@@ -104,31 +96,32 @@ define(['lodash', 'jquery', 'd3', 'd3.fisheye'], function (_, $, d3) {
             update = function () {
                 this.canvas.clearRect(0, 0, canvasWidth, canvasHeight);
 
-                var elements = dataContainer.selectAll('custom');
-
                 canvas.strokeStyle = 'black';
                 canvas.beginPath();
 
-                elements.each(function (value, index) {
+                dataBinding.each(function (value, index) {
                     if (index >= images.length) {
                         return;
                     }
 
                     var node = d3.select(this),
-                        nextNode = elements.filter(function (d, i) {
+                        nextNode = dataBinding.filter(function (d, i) {
                             return i === index + 1;
                         }),
-                        currentNodeX = node.attr('x'),
+                        currentNodeX = +node.attr('x'),
                         nextNodeX = nextNode.size() ? nextNode.attr('x') : canvasWidth,
                         image = images[index],
-                        imagePartWidth = Math.min(nextNodeX - currentNodeX, image.width);
+                        imageVisualWidth = Math.min(nextNodeX - currentNodeX, image.width);
+
+                    image.position = currentNodeX;
+                    image.visualWidth = imageVisualWidth;
 
                     canvas.moveTo(currentNodeX, 0);
                     canvas.lineTo(currentNodeX, canvasHeight);
 
                     canvas.drawImage(image,
-                        (image.width - imagePartWidth) / 2, 0, imagePartWidth, canvasHeight,
-                        currentNodeX, 0, imagePartWidth, canvasHeight);
+                        (image.width - imageVisualWidth) / 2, 0, imageVisualWidth, canvasHeight,
+                        currentNodeX, 0, imageVisualWidth, canvasHeight);
                 });
 
                 canvas.stroke();
@@ -153,7 +146,16 @@ define(['lodash', 'jquery', 'd3', 'd3.fisheye'], function (_, $, d3) {
                 .transition()
                 .ease('cubic-out')
                 .duration(300)
+                .tween('fisheye', function (){
+                    return function() {
+                        triggerChange();
+                    };
+                })
                 .attr('x', xFisheye)
+                .filter(function (d, i) {
+                    return i === images.length - 1;
+                })
+                .each('end', triggerChange);
         };
 
         $(this.options.canvas).off('mousemove touchstart touchmove').on('touchstart touchmove mousemove', setDistortion.bind(this, distortion));
@@ -179,9 +181,19 @@ define(['lodash', 'jquery', 'd3', 'd3.fisheye'], function (_, $, d3) {
         return distortion;
     };
 
+    Fisheye.prototype.getVisualRange = function (range) {
+        return {
+            lower: this.images[range.lower].position,
+            upper: this.images[range.upper].position + this.images[range.upper].visualWidth
+        };
+    };
+
     Fisheye.prototype.run = function () {
         this.options.canvas.height = this.images[0].height;
+
         this.options.canvas.width = $(this.options.canvas).width();
+        this.options.canvas.width = $(this.options.canvas).width(); // for some reason first width set is incorrect
+
         $(this.options.canvas).height(this.images[0].height);
 
         this.canvas = this.options.canvas.getContext('2d');
@@ -192,6 +204,12 @@ define(['lodash', 'jquery', 'd3', 'd3.fisheye'], function (_, $, d3) {
             this.options.canvas.width = $(this.options.canvas).width();
             this.updateFisheye();
         }.bind(this));
+
+        _.delay(this.started.resolve.bind(this.started), 50);
+    };
+
+    Fisheye.prototype.ready = function () {
+        return this.started.promise();
     };
 
     return Fisheye;

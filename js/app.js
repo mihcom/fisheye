@@ -1,54 +1,28 @@
-requirejs.config({
-    baseUrl: '/js',
-
-    paths: {
-        fabric: '/bower_components/fabric.js/dist/fabric.min',
-        lodash: '/bower_components/lodash/dist/lodash.min',
-        jquery: '/bower_components/jquery/dist/jquery.min',
-        stats: '/bower_components/stats.js/build/stats.min',
-        d3: '/bower_components/d3/d3.min',
-        'd3.fisheye': '/js/helpers/d3.fisheye'
-    },
-
-    shim: {
-        fabric: {exports: 'fabric'},
-        lodash: {exports: '_'},
-        tweenjs: {exports: 'createjs'},
-        stats: {exports: 'Stats'},
-        highlightjs: {exports: 'hljs'},
-        d3: {exports: 'd3'},
-        'd3.fisheye': {
-            deps: ['d3'],
-            exports: 'd3.fisheye'
-        }
-    }
-});
-
-require(['./canvas-fisheye'], function (Fisheye) {
+define(['jquery', 'marionette'], function ($, Marionette) {
     'use strict';
 
-    (function () {
-        var canvas = document.querySelector('#sprite-example'),
-            options = {
-                canvas: canvas,
-                imageUrl: '/images/marc-jacobs.jpg',
-                spriteImagesCount: 41,
-                distortion : 2
-            };
+    var App = new Marionette.Application(),
+        API = {
+            runExamples: function () {
+                require(['fisheye/annotated_fisheye/controller'], function (AnnotatedFisheye) {
+                    var options = {
+                        el: $('section'),
+                        imageUrl: '/images/marc-jacobs.jpg',
+                        spriteImagesCount: 41,
+                        distortion: 2,
+                        annotations: {
+                            '2': 'From new collection',
+                            '6-11': 'Etiam mi velit, laoreet id blandit at, euismod fermentum ante.',
+                            '25-38': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque erat magna, sodales sit amet purus ut, ultrices tincidunt diam. Curabitur molestie odio id feugiat lacinia. Aenean ullamcorper nunc sapien, sed malesuada lacus venenatis sit amet.'
+                        }
+                    };
 
-        new Fisheye(options);
-    }());
+                    new AnnotatedFisheye(options);
+                });
+            }
+        };
 
-    (function () {
-        var canvas = document.querySelector('#image-set-example'),
-            options = {
-                canvas: canvas,
-                imageUrl: [
-                    'http://static.pandora.net/consumer/jewellery/01/400x400/750841CZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190888CFP.jpg',
-                    'http://static.pandora.net/consumer/jewellery/01/400x400/190888NCK.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190900EN12.jpg',
-                    'http://static.pandora.net/consumer/jewellery/01/400x400/190903PCZ.jpg', 'http://static.pandora.net/consumer/jewellery/01/400x400/190904CZ.jpg']
-            };
+    App.on('start', API.runExamples);
 
-        new Fisheye(options);
-    }());
+    return App;
 });
